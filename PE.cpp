@@ -1,122 +1,81 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned int DWORD;  //重新定义数据类型赋予意义
+int main() {
+    const char* filePath = "test.exe"; 
+    ParsePEFile(filePath);//解析文件函数
+    return 0;
+}
+void ParsePEFile(const char* testfile) {
+    //句柄处理文件
+    HANDLE hFile = CreateFileA(testfile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        printf("无法打开文件: %s\n", testfile);
+        return;
+    }
 
-//定义结构数据
-//DOS头结构体
-typedef struct _IMAGE_DOS_HEADER {
-	WORD e_magic;
-	WORD e_cblp;
-	WORD e_cp;
-	WORD e_crlc;
-	WORD e_cparhdr;
-	WORD e_minalloc;
-	WORD e_maxalloc;
-	WORD e_ss;
-	WORD e_sp;
-	WORD e_csum;
-	WORD e_ip;
-	WORD e_cs;
-	WORD e_lfarlc;
-	WORD e_ovno;
-	WORD e_res[4];
-	WORD e_oemid;
-	WORD e_oeminfo;
-	WORD e_res2[10];
-	long e_lfanew;
-}IMAGE_DOS_HEADER,*PIMAGE_DOS_HEADER;
+    // 获取文件大小
+    DWORD fileSize = GetFileSize(hFile, NULL);
+    if (fileSize == INVALID_FILE_SIZE) {
+        printf("无法获取文件大小\n");
+        CloseHandle(hFile);
+        return;
+    }
 
-//NT头文件头结构体
-typedef struct _IMAGE_FILE_HEADER {
-	WORD Machine;
-	WORD NumberOfSections;
-	DWORD TimeDateStamp;
-	DWORD PointerToSymbolTable;
-	DWORD NumberOfSymbols;
-	WORD SizeOfOptionalHeader;
-	WORD Characteristics;
-}IMAGE_FILE_HEADER,*PIMAGE_FILE_HEADER;
+    // 分配内存用于数据读取
+    LPVOID fileBuffer = VirtualAlloc(NULL, fileSize, MEM_COMMIT, PAGE_READWRITE);
+    if (fileBuffer == NULL) {
+        printf("无法分配内存\n");
+        CloseHandle(hFile);
+        return;
+    }
+    DWORD bytesRead;
+    if (!ReadFile(hFile, fileBuffer, fileSize, &bytesRead, NULL)) {
+        printf("无法读取文件内容\n");
+        VirtualFree(fileBuffer, 0, MEM_RELEASE);
+        CloseHandle(hFile);
+        return;
+    }
 
-//NT头可选头结构体
-typedef struct _IMAGE_OPTIONAL_HEADER {
-    WORD Magic;           // 魔术数字
-    BYTE MajorLinkerVersion; // 链接器主版本号
-    BYTE MinorLinkerVersion; // 链接器次版本号
-    DWORD SizeOfCode;        // 代码段大小
-    DWORD SizeOfInitializedData; // 已初始化数据段大小
-    DWORD SizeOfUninitializedData; // 未初始化数据段大小
-    DWORD AddressOfEntryPoint; // 入口点地址
-    DWORD BaseOfCode;        // 代码段基地址
-    DWORD BaseOfData;        // 数据段基地址
-    DWORD ImageBase;         // 映像基地址
-    DWORD SectionAlignment;  // 节对齐
-    DWORD FileAlignment;     // 文件对齐
-    WORD MajorOperatingSystemVersion; // 操作系统主版本号
-    WORD MinorOperatingSystemVersion; // 操作系统次版本号
-    WORD MajorImageVersion; // 映像主版本号
-    WORD MinorImageVersion; // 映像次版本号
-    WORD MajorSubsystemVersion; // 子系统主版本号
-    WORD MinorSubsystemVersion; // 子系统次版本号
-    DWORD Win32VersionValue; // Win32 版本值
-    DWORD SizeOfImage;       // 映像大小
-    DWORD SizeOfHeaders;     // 头文件大小
-    DWORD CheckSum;          // 校验和
-    WORD Subsystem;       // 子系统类型
-    WORD DllCharacteristics; // DLL 特征
-    DWORD SizeOfStackReserve; // 栈保留大小
-    DWORD SizeOfStackCommit; // 栈提交大小
-    DWORD SizeOfHeapReserve; // 堆保留大小
-    DWORD SizeOfHeapCommit; // 堆提交大小
-    DWORD LoaderFlags;       // 加载器标志
-    DWORD NumberOfRvaAndSizes; // RVA 和大小的数量
-} IMAGE_OPTIONAL_HEADER, * PIMAGE_OPTIONAL_HEADER;
+    // 关闭文件句柄
+    CloseHandle(hFile);
 
-// NT 头结构体
-typedef struct _IMAGE_NT_HEADERS {
-    DWORD Signature;         // 签名，固定为 0x00004550
-    IMAGE_FILE_HEADER FileHeader;   // 文件头
-    IMAGE_OPTIONAL_HEADER OptionalHeader; // 可选头
-} IMAGE_NT_HEADERS, * PIMAGE_NT_HEADERS;
+    // 检查DOS头
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)fileBuffer;
+    if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE) {
+        printf("不是有效的DOS头\n");
+        VirtualFree(fileBuffer, 0, MEM_RELEASE);
+        return;
+    }
 
-// 节表结构体
-typedef struct _IMAGE_SECTION_HEADER {
-    char Name[8];                   // 节名
-    DWORD VirtualSize;       // 虚拟大小
-    DWORD VirtualAddress;    // 虚拟地址
-    DWORD SizeOfRawData;     // 原始数据大小
-    DWORD PointerToRawData;  // 原始数据指针
-    DWORD PointerToRelocations; // 重定位指针
-    DWORD PointerToLinenumbers; // 行号指针
-    WORD NumberOfRelocations; // 重定位数量
-    WORD NumberOfLinenumbers; // 行号数量
-    DWORD Characteristics;   // 节特征
-} IMAGE_SECTION_HEADER, * PIMAGE_SECTION_HEADER;
+    // 获取NT头
+    PIMAGE_NT_HEADERS pNtHeaders = (PIMAGE_NT_HEADERS)((DWORD_PTR)fileBuffer + pDosHeader->e_lfanew);
+    if (pNtHeaders->Signature != IMAGE_NT_SIGNATURE) {
+        printf("不是有效的NT头\n");
+        VirtualFree(fileBuffer, 0, MEM_RELEASE);
+        return;
+    }
 
-//模拟堆内存块结构体
-typedef struct MemoryBlock{
-	size_t size;
-    int is_free;
-	struct MemoryBlock* next;
-}MemoryBlock;
+    // 打印基本信息
+    printf("PE文件基本信息:\n");
+    printf("  入口点RVA: 0x%X\n", pNtHeaders->OptionalHeader.AddressOfEntryPoint);
+    printf("  镜像基址: 0x%X\n", pNtHeaders->OptionalHeader.ImageBase);
+    printf("  节表数量: %d\n", pNtHeaders->FileHeader.NumberOfSections);
 
-//内存管理模块
-//初始化内存池
-//使用malloc函数分配一块连续的内存空间作为内存池
-MemoryBlock* init_memory_pool(size_t pool_size) {     //对象大小和分配的内存池大小
-	MemoryBlock* pool = (MemoryBlock*)malloc(pool_size);
-	if (pool == NULL) {
-		return NULL;
-	}
-	pool->size = pool_size - sizeof(MemoryBlock);
-	pool->is_free = 1;   //1表示内存块空闲
-	pool->next = NULL;
-    return pool;
+    // 获取节表
+    PIMAGE_SECTION_HEADER pSectionHeader = IMAGE_FIRST_SECTION(pNtHeaders);
+    for (int i = 0; i < pNtHeaders->FileHeader.NumberOfSections; i++) {
+        printf("  节表 %d:\n", i + 1);
+        printf("    名称: %s\n", pSectionHeader[i].Name);
+        printf("    虚拟大小: 0x%X\n", pSectionHeader[i].Misc.VirtualSize);
+        printf("    虚拟地址: 0x%X\n", pSectionHeader[i].VirtualAddress);
+        printf("    大小: 0x%X\n", pSectionHeader[i].SizeOfRawData);
+        printf("    指针: 0x%X\n", pSectionHeader[i].PointerToRawData);
+    }
+
+    // 释放内存
+    VirtualFree(fileBuffer, 0, MEM_RELEASE);
 }
 
-//模拟内存分配
-//模拟内存释放
