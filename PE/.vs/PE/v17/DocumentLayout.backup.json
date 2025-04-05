@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\GREYCRANE\\re\\c\\PE\\PE\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{6E774EFC-8BC8-4394-A3B6-68A0D6806142}|PE.vcxproj|D:\\GREYCRANE\\re\\c\\PE\\PE\\PE.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{6E774EFC-8BC8-4394-A3B6-68A0D6806142}|PE.vcxproj|solutionrelative:PE.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PE.cpp",
+              "DocumentMoniker": "D:\\GREYCRANE\\re\\c\\PE\\PE\\PE.cpp",
+              "RelativeDocumentMoniker": "PE.cpp",
+              "ToolTip": "D:\\GREYCRANE\\re\\c\\PE\\PE\\PE.cpp",
+              "RelativeToolTip": "PE.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-03-30T07:24:13.3Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
