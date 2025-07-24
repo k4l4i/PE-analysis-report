@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ParsePEFile(const char* testfile)
+void ParsePEFile(const char* testfile);
 int main() {
     const char* filePath = "test.exe"; 
     ParsePEFile(filePath);//解析文件函数
